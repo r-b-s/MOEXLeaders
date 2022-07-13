@@ -71,6 +71,11 @@ async def main(message: aiogram.types.Message, regexp_command):
     global SECurl
     global HISTurl
 
+    topcount=int(regexp_command.group(1))
+    period=regexp_command.group(2)
+    periodcount=int(regexp_command.group(3))
+    volatileMultiplier=int(regexp_command.group(4))
+
     if not os.path.isfile('seclist.txt'):
         print('making liquidList')
         liquidList()
@@ -78,14 +83,14 @@ async def main(message: aiogram.types.Message, regexp_command):
     with open('seclist.txt','r') as file:
         secs=file.read().splitlines()    
 
-    if regexp_command.group(2)=='w':
-        dtFrom=datetime.date.today()-datetime.timedelta(weeks=int(regexp_command.group(3)))
+    if period=='w':
+        dtFrom=datetime.date.today()-datetime.timedelta(weeks=periodcount)
     else: 
-        dtFrom=datetime.date.today()-datetime.timedelta(days=int(regexp_command.group(3)))     
+        dtFrom=datetime.date.today()-datetime.timedelta(days=periodcount)     
     print(dtFrom)
 
     top_secs=[]
-    for sec in secs[0:int(regexp_command.group(1))]:
+    for sec in secs[0:topcount]:
         url=HISTurl.format(sec=sec,date=dtFrom.strftime('%Y-%m-%d'))
         sec_hist=requests.get(url).json()
         if not HIST_DICT:
@@ -132,7 +137,7 @@ async def main(message: aiogram.types.Message, regexp_command):
             #round(s['oldPrice'],0 if s['oldPrice']>999  else 1 if s['oldPrice']>10  else 4),
             round(s['lastPrice'],0 if s['oldPrice']>999  else 1 if s['oldPrice']>10  else 4),
             round(100*s['stdev']/ s['oldPrice'],1),
-            round(s['lastPrice']-int(regexp_command.group(4))*s['stdev'],0 if s['oldPrice']>999  else 1 if s['oldPrice']>10  else 4)
+            round(s['lastPrice']-volatileMultiplier*s['stdev'],0 if s['oldPrice']>999  else 1 if s['oldPrice']>10  else 4)
             ])       
     table.append(['-------','-------', '-------', '-------','-------'])    
     headers=['SEC','Δ%','LAST', 'std%', 'Sloss']        
